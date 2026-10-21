@@ -2040,7 +2040,10 @@ const MATCH_FRESH = 5 * 60000;
 async function findGame(){
   const st = $("#duelStatus"); if (needNick(st)) return;
   const mine = duels.find(d => d.host === myId && d.status === "open");
-  if (mine){ st.textContent = "Ищем соперника…"; openDuel(mine.id); return; }
+  if (mine){
+    if (Date.now() - (mine.created || 0) > MATCH_FRESH){ const t = Date.now(); mine.created = t; try { await db.collection("duels").doc(mine.id).update({created:t, lastTs:t}); } catch {} }   // an old forgotten search would never be matched: refresh it
+    st.textContent = "Ищем соперника…"; openDuel(mine.id); searchBeat(); return;
+  }
   const now = Date.now();
   const pool = duels.filter(d => d.status === "open" && !d.guest && d.host !== myId && now - d.created < MATCH_FRESH).sort((x,y) => x.created - y.created);
   for (const d of pool){ if (await joinDuel(d.id, true)) return; }
@@ -2048,21 +2051,52 @@ async function findGame(){
     const now2 = Date.now(), body = {host:myId, guest:null, status:"open", mode:"own", actions:[], created:now2, lastTs:now2};
     const ref = await db.collection("duels").add(body);
     if (!duels.some(x => x.id === ref.id)) duels.unshift({id: ref.id, ...body});   // show the search window at once, before the live snapshot arrives
-    st.textContent = "Ищем соперника…"; openDuel(ref.id);
+    st.textContent = "Ищем соперника…"; openDuel(ref.id); searchBeat();
   } catch(e){ if (e && e.code === "invalid_argument"){ readOnly = true; st.textContent = "Нет прав на запись: владелец должен открыть доступ уровня «Участник» (Contributor) в меню «Поделиться». Пока можно играть с ботом."; } else st.textContent = e && e.code === "quota_exceeded" ? "Хранилище заполнено." : "Не удалось начать поиск. (" + ((e && (e.code || e.message)) || "?") + ")"; }
 }
 $("#duelCreate").onclick = findGame;
-let matching = false;
+let matching = false, matchingAt = 0;
 async function autoMatch(){                         // two people searching at once: the later one joins the earlier one
+  if (matching && Date.now() - matchingAt > 8000) matching = false;
   if (matching || !myId || !db || readOnly) return;
   const mine = duels.find(d => d.host === myId && d.status === "open" && !d.guest);
   if (!mine) return;
   const now = Date.now();
   const other = duels.filter(d => d.status === "open" && !d.guest && d.host !== myId && now - d.created < MATCH_FRESH && (d.created < mine.created || (d.created === mine.created && d.id < mine.id))).sort((x,y) => x.created - y.created)[0];
   if (!other) return;
-  matching = true;
+  matching = true; matchingAt = Date.now();
   try { if (await joinDuel(other.id, true)) { try { await db.collection("duels").doc(mine.id).delete(); } catch {} } } finally { matching = false; }
 }
+/* While searching, the live listener alone is not trusted (a phone that slept or a stalled connection can leave one side on "searching"):
+   every few seconds, and as soon as the page comes back to the foreground, re-read my own duel and the open ones straight from the server. */
+let beatBusy = false;
+async function searchBeat(){
+  if (beatBusy || !myId || !db || readOnly || document.hidden) return;
+  const mine = duels.filter(d => d.host === myId && d.status === "open" && !d.guest && !d.bot);
+  if (!mine.length && !(viewing && viewing !== "bot")) return;
+  beatBusy = true;
+  try {
+    const ids = new Set(mine.map(d => d.id)); if (viewing && viewing !== "bot") ids.add(viewing);
+    let changed = false;
+    for (const id of ids){
+      const sn = await db.collection("duels").doc(id).get();
+      const i = duels.findIndex(d => d.id === id);
+      if (!sn.exists){ if (i >= 0){ duels.splice(i, 1); changed = true; } if (viewing === id){ viewing = null; $("#duelStatus").textContent = "Дуэль отменена."; changed = true; } }
+      else { const nd = {id, ...sn.data()}; if (i < 0){ duels.unshift(nd); changed = true; } else if (JSON.stringify(duels[i]) !== JSON.stringify(nd)){ duels[i] = nd; changed = true; } }
+    }
+    if (mine.length){
+      const q = await db.collection("duels").where("status","==","open").get();
+      const seen = new Set(q.docs.filter(x => x.data().status === "open").map(x => x.id));
+      for (let i = duels.length - 1; i >= 0; i--){ const d = duels[i]; if (d.status === "open" && d.host !== myId && !d.bot && !seen.has(d.id)){ duels.splice(i, 1); changed = true; } }
+      q.docs.forEach(x => { if (x.data().status === "open" && !duels.some(d => d.id === x.id)){ duels.push({id:x.id, ...x.data()}); changed = true; } });
+    }
+    if (changed){ renderDuel(); }
+    autoMatch();
+  } catch {} finally { beatBusy = false; }
+}
+setInterval(searchBeat, 3000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) searchBeat(); });
+window.addEventListener("online", () => searchBeat());
 let lastBotLvl = 2;
 $("#duelBot").onclick = () => {
   const now = Date.now(); if (isBotMode(playMode)) lastBotLvl = Number(playMode.slice(3));
@@ -4160,7 +4194,68 @@ async function doLogin(login, pw){
   const a = snap.data(); if (await hashPw(pw, a.salt) !== a.hash) return "Неверный пароль.";
   beginSession(id, a.login, a.hash); return "";
 }
+const MAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+function authCardFb(){
+  let mode = "in";
+  const mail = el("input",{id:"auMail",type:"text",inputmode:"email",autocomplete:"username",autocapitalize:"none",autocorrect:"off",maxlength:"80",placeholder:"name@example.com"}),
+        nick = el("input",{id:"auNick",maxlength:"20",autocomplete:"nickname",placeholder:L("Например, Miracle_fan", "e.g. Miracle_fan")}),
+        pw = el("input",{id:"auPw",type:"password",maxlength:"64",autocomplete:"current-password",placeholder:L("Не короче 6 символов", "At least 6 characters")}),
+        pw2 = el("input",{id:"auPw2",type:"password",maxlength:"64",autocomplete:"new-password",placeholder:L("Повтори пароль", "Repeat the password")}),
+        st = el("span",{class:"status","aria-live":"polite"}), go2 = el("button",{class:"btn",type:"submit"}, L("Войти", "Sign in")),
+        forgot = el("button",{class:"ghost",type:"button",style:"padding:5px 10px;font-size:12.5px"}, L("Забыли пароль?", "Forgot password?"));
+  const mailLbl = el("label",{}, L("Почта или логин", "Email or login")), fNick = el("div",{class:"field",hidden:true}, el("label",{}, L("Ник (виден другим игрокам)", "Nickname (visible to other players)")), nick), f2 = el("div",{class:"field",hidden:true}, el("label",{}, L("Повтори пароль", "Repeat the password")), pw2);
+  const segIn = el("button",{type:"button","aria-pressed":"true"}, L("Вход", "Sign in")), segUp = el("button",{type:"button","aria-pressed":"false"}, L("Регистрация", "Sign up"));
+  const setMode = m => { mode = m; segIn.setAttribute("aria-pressed", m==="in"); segUp.setAttribute("aria-pressed", m==="up"); f2.hidden = fNick.hidden = m === "in"; forgot.hidden = m !== "in"; mailLbl.textContent = m === "in" ? L("Почта или логин", "Email or login") : L("Почта", "Email"); go2.textContent = m === "in" ? L("Войти", "Sign in") : L("Создать аккаунт", "Create account"); pw.autocomplete = m === "in" ? "current-password" : "new-password"; st.textContent = ""; };
+  segIn.onclick = () => setMode("in"); segUp.onclick = () => setMode("up");
+  forgot.onclick = async () => {
+    const v = mail.value.trim();
+    if (!MAIL_RE.test(v)){ st.textContent = L("Впиши свою почту — на неё придёт письмо для сброса пароля.", "Enter your email — the reset link will be sent there."); return; }
+    forgot.disabled = true;
+    try { await fbAuth.sendPasswordResetEmail(v.toLowerCase()); } catch {}
+    st.textContent = L("Если такая почта зарегистрирована, на неё отправлено письмо для сброса пароля. Проверь и «Спам».", "If this email is registered, a reset link has been sent. Check Spam too.");
+    forgot.disabled = false;
+  };
+  const form = el("form",{class:"form",id:"authForm",style:"margin-top:0"},
+    el("div",{class:"seg",style:"margin:0 0 2px"}, segIn, segUp),
+    el("div",{class:"field"}, mailLbl, mail), fNick,
+    el("div",{class:"field"}, el("label",{}, L("Пароль", "Password")), pw), f2,
+    el("div",{class:"compose-row"}, st, go2), forgot,
+    el("p",{class:"status",style:"margin:0"}, L("Почта нужна, чтобы восстановить доступ, если забудешь пароль. Её никто не увидит. Пароль не хранится в игре — им занимается Google Firebase.", "Your email is only used to recover access if you forget the password. Nobody else can see it. The password is handled by Google Firebase, not stored in the game.")));
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const v = mail.value.trim(), p = pw.value;
+    go2.disabled = true;
+    try {
+      if (mode === "in"){
+        if (!v){ st.textContent = L("Впиши почту или логин.", "Enter your email or login."); return; }
+        if (p.length < 6){ st.textContent = L("Пароль — минимум 6 символов.", "The password needs at least 6 characters."); return; }
+        st.textContent = L("Проверяю…", "Checking…");
+        const email = v.includes("@") ? v.toLowerCase() : (await accIdOf(v)) + "@aegis-game.app";
+        try { const cred = await fbAuth.signInWithEmailAndPassword(email, p); beginSession(cred.user.uid, cred.user.displayName || v, ""); st.textContent = ""; }
+        catch (e2) { const m = fbErr(e2); st.textContent = m ? L(m, m) : L("Не получилось. Попробуй ещё раз.", "Something went wrong. Please try again."); }
+      } else {
+        const n = nick.value.trim();
+        if (!MAIL_RE.test(v)){ st.textContent = L("Проверь почту — она записана неверно.", "That email looks wrong."); return; }
+        if (!LOGIN_RE.test(n)){ st.textContent = L("Ник: 3–20 символов, буквы, цифры, _ . -", "Nickname: 3–20 characters, letters, digits, _ . -"); return; }
+        if (p.length < 6){ st.textContent = L("Пароль — минимум 6 символов.", "The password needs at least 6 characters."); return; }
+        if (p !== pw2.value){ st.textContent = L("Пароли не совпадают.", "The passwords don't match."); return; }
+        st.textContent = L("Создаю аккаунт…", "Creating the account…");
+        let cred; try { cred = await fbAuth.createUserWithEmailAndPassword(v.toLowerCase(), p); } catch (e2) { const m = fbErr(e2); st.textContent = m ? L(m, m) : L("Не получилось. Попробуй ещё раз.", "Something went wrong. Please try again."); return; }
+        const uid = cred.user.uid; try { await cred.user.updateProfile({displayName: n}); } catch {}
+        try { cred.user.sendEmailVerification(); } catch {}
+        let nk = n, c = 1; const used = new Set(Object.values(profiles).map(q => q && q.nick && q.nick.toLowerCase()));
+        while (used.has(nk.toLowerCase())) nk = n.slice(0,17) + (++c);
+        const body = {nick:nk, rank:RANKS[3], pos:null, hero:"", about:"", since:Date.now()};
+        await db.doc("profiles/" + uid).set(body); profiles[uid] = body;
+        beginSession(uid, n, ""); st.textContent = "";
+      }
+    } catch (e3) { st.textContent = L("Не получилось. Попробуй ещё раз.", "Something went wrong. Please try again."); }
+    finally { go2.disabled = false; }
+  });
+  return form;
+}
 function authCard(){
+  if (fbMode) return authCardFb();
   let mode = "in";
   const login = el("input",{id:"auLogin",maxlength:"20",autocomplete:"username",placeholder:"Например, Miracle_fan"}),
         pw = el("input",{id:"auPw",type:"password",maxlength:"64",autocomplete:"current-password",placeholder:"Не короче 6 символов"}),
@@ -4226,12 +4321,13 @@ async function fbInit(){
   const base = "https://www.gstatic.com/firebasejs/" + FB_VER + "/";
   await fbLoad(base + "firebase-app-compat.js"); await Promise.all([fbLoad(base + "firebase-auth-compat.js"), fbLoad(base + "firebase-firestore-compat.js")]);
   firebase.initializeApp(FB_CONFIG); fbAuth = firebase.auth(); fbFs = firebase.firestore();
+  try { fbAuth.languageCode = LANG === "en" ? "en" : "ru"; } catch {}
   try { fbFs.settings({experimentalAutoDetectLongPolling: true, merge: true}); } catch {}
   fbMode = true;
   return {collection: path => fbQuery(fbFs.collection(fbPath(path))), doc: path => fbDoc(fbFs.doc(path))};
 }
 const fbWaitUser = () => new Promise(res => { let done = false; const fin = u => { if (!done){ done = true; res(u); } }; try { const off = fbAuth.onAuthStateChanged(u => { try { off(); } catch {} fin(u); }); } catch { fin(null); } setTimeout(() => fin(null), 6000); });
-const fbErr = e => { const c = e && e.code || ""; return c === "auth/email-already-in-use" ? "Такой логин уже занят." : (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found" || c === "auth/invalid-login-credentials") ? "Неверный логин или пароль." : c === "auth/too-many-requests" ? "Слишком много попыток — подожди немного." : c === "auth/network-request-failed" ? "Нет соединения с сервером." : ""; };
+const fbErr = e => { const c = e && e.code || ""; return c === "auth/email-already-in-use" ? "Такой логин уже занят." : (c === "auth/invalid-credential" || c === "auth/wrong-password" || c === "auth/user-not-found" || c === "auth/invalid-login-credentials") ? "Неверный логин или пароль." : c === "auth/invalid-email" ? "Проверь почту — она записана неверно." : c === "auth/weak-password" ? "Слабый пароль — минимум 6 символов." : c === "auth/too-many-requests" ? "Слишком много попыток — подожди немного." : c === "auth/network-request-failed" ? "Нет соединения с сервером." : ""; };
 
 /* ---------- live data ---------- */
 async function initLive(){
