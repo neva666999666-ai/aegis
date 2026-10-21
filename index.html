@@ -782,6 +782,8 @@ input:focus,textarea:focus,select:focus{outline:none;box-shadow:inset 0 4px 8px 
 .pmode{cursor:pointer;transition:transform .08s}
 .pmode strong{font-size:19px;letter-spacing:.06em;text-transform:uppercase}
 .pmode:active{transform:translateY(2px)}
+@keyframes pmPulse{0%{box-shadow:0 0 0 0 rgba(201,163,74,.8);transform:scale(1)}40%{transform:scale(1.04)}100%{box-shadow:0 0 0 22px rgba(201,163,74,0);transform:scale(1)}}
+#modeBox.pm-pulse{animation:pmPulse .65s ease-out}
 .pm-more{font-size:11px;color:var(--muted);letter-spacing:.06em}
 .pbox em{font-style:normal;font-size:10.5px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
 .pbox .play-wl{gap:8px;font-size:11.5px}
@@ -2132,18 +2134,35 @@ const LAB_ENTRY = {t: "Лаборатория драфтов", d: L("Трени�
 const isBotMode = m => /^bot\d$/.test(m);
 let playMode = "find"; try { let m = localStorage.getItem("aegis-mode"); if (m === "bot") m = "bot2"; if (PLAY_MODES[m]) playMode = m; } catch {}
 function setPlayMode(m){ playMode = m; try { localStorage.setItem("aegis-mode", m); } catch {} playKey = ""; renderPlayCard(); }
-function openModePicker(){
+const modeChosen = () => { try { return localStorage.getItem("aegis-mode-chosen") === "1"; } catch { return true; } };
+function startPlay(){ (isBotMode(playMode) ? $("#duelBot") : $("#duelCreate")).click(); }
+function openModePicker(first){
   const old = document.getElementById("modePick"); if (old) old.remove();
-  const box = el("div",{class:"pp-box",style:"--c:var(--gold)"}, el("h3",{},"Режим игры"),
-    el("div",{class:"pp-grid"}, ...[...Object.entries(PLAY_MODES), ["lab", LAB_ENTRY]].map(([k, v]) => { const b = el("button",{type:"button",class:"pp-btn" + (k === playMode ? " rec" : ""),style:"--pc:var(--gold)"}, el("span",{class:"pp-n"}, k === playMode ? "✓" : ""), el("b",{}, v.t), el("small",{}, v.d)); b.onclick = () => { wrap.remove(); document.body.style.overflow = ""; if (k === "lab") setMode("lab"); else setPlayMode(k); }; return b; })),
+  const close = () => { wrap.remove(); document.body.style.overflow = ""; };
+  const choose = k => {
+    if (k === "lab"){ close(); setMode("lab"); return; }
+    setPlayMode(k); try { localStorage.setItem("aegis-mode-chosen", "1"); } catch {}
+    if (!first){ close(); return; }
+    let done = false; const fin = () => { if (done) return; done = true; close(); const t = $("#modeBox"); t.classList.remove("pm-pulse"); void t.offsetWidth; t.classList.add("pm-pulse"); setTimeout(() => t.classList.remove("pm-pulse"), 700); setTimeout(startPlay, 260); };
+    try {
+      const tile = $("#modeBox"), a = box.getBoundingClientRect(), t = tile.getBoundingClientRect();
+      const dx = (t.left + t.width / 2) - (a.left + a.width / 2), dy = (t.top + t.height / 2) - (a.top + a.height / 2);
+      wrap.animate([{backgroundColor:"rgba(4,8,28,.82)"},{backgroundColor:"rgba(4,8,28,0)"}], {duration:420, fill:"forwards"});
+      const an = box.animate([{transform:"none", opacity:1},{transform:`translate(${dx}px,${dy}px) scale(${Math.max(.2, t.width / a.width)},${Math.max(.1, t.height / a.height)})`, opacity:.12}], {duration:480, easing:"cubic-bezier(.55,0,.25,1)", fill:"forwards"});
+      an.onfinish = fin; setTimeout(fin, 800);
+    } catch { fin(); }
+  };
+  const showChk = !first && modeChosen();
+  const box = el("div",{class:"pp-box",style:"--c:var(--gold)"}, el("h3",{},first ? L("В каком режиме хочешь сыграть?","Which mode do you want to play?") : L("Режим игры","Game mode")),
+    el("div",{class:"pp-grid"}, ...[...Object.entries(PLAY_MODES), ["lab", LAB_ENTRY]].map(([k, v]) => { const b = el("button",{type:"button",class:"pp-btn" + (showChk && k === playMode ? " rec" : ""),style:"--pc:var(--gold)"}, el("span",{class:"pp-n"}, showChk && k === playMode ? "✓" : ""), el("b",{}, v.t), el("small",{}, v.d)); b.onclick = () => choose(k); return b; })),
     el("button",{type:"button",class:"ghost pp-cancel"},"Закрыть"));
   const wrap = el("div",{id:"modePick",class:"pp",role:"dialog","aria-modal":"true"}, box);
-  box.querySelector(".pp-cancel").onclick = () => { wrap.remove(); document.body.style.overflow = ""; };
-  wrap.addEventListener("click", e => { if (e.target === wrap){ wrap.remove(); document.body.style.overflow = ""; } });
+  box.querySelector(".pp-cancel").onclick = close;
+  wrap.addEventListener("click", e => { if (e.target === wrap) close(); });
   document.body.append(wrap); document.body.style.overflow = "hidden";
 }
-$("#modeBox").onclick = openModePicker;
-$("#duelStart").onclick = () => { try { SFX.unlock(); } catch {} (isBotMode(playMode) ? $("#duelBot") : $("#duelCreate")).click(); };
+$("#modeBox").onclick = () => openModePicker(false);
+$("#duelStart").onclick = () => { try { SFX.unlock(); } catch {} if (!modeChosen()){ openModePicker(true); return; } startPlay(); };
 function renderPlayCard(){
   const e = myEmblem(290), box = $("#playEmblem");
   const p = myProfile && myId ? myProfile : null, mm = p ? mmrOf(p) : null, w = p ? (p.w || 0) : 0, l = p ? (p.l || 0) : 0;
@@ -4067,9 +4086,22 @@ function renderMeStats(p){
     el("span",{class:"n-mmr " + (h.delta >= 0 ? "up" : "down")}, h.calib && typeof h.skill === "number" ? L("драфт ", "draft ") + h.skill : (h.delta >= 0 ? "+" : "") + h.delta),
     el("span",{class:"status"}, `${dt.getDate()} ${MONTHS[dt.getMonth()]}`)); })));
 }
+/* Sign-in window: appears at once for a new visitor and after logging out; closes when an account is active */
+function showAuthGate(){
+  if (!db || myId) return;
+  let g = document.getElementById("authGate"); if (g && g.querySelector("#authForm")) return;
+  if (g) g.remove();
+  const box = el("div",{class:"pp-box",style:"--c:var(--gold)"},
+    el("h3",{},L("Добро пожаловать в Аегис","Welcome to Aegis")),
+    el("p",{class:"status",style:"margin:2px 0 12px;text-align:center"},L("Войди или создай аккаунт — так сохранятся твой ранг, победы и драфты.","Sign in or create an account to keep your rank, wins and drafts.")),
+    authCard());
+  g = el("div",{id:"authGate",class:"pp",role:"dialog","aria-modal":"true",style:"z-index:90;background:rgba(4,8,28,.94)"}, box);
+  document.body.append(g); document.body.style.overflow = "hidden";
+}
+function hideAuthGate(){ const g = document.getElementById("authGate"); if (g){ g.remove(); document.body.style.overflow = ""; } }
 function renderMe(){
   const card = $("#meCard");
-  if (!myId && db && card.querySelector("#authForm")) return;   // don't wipe a half-typed form on live updates
+  if (!myId && db && document.querySelector("#authGate #authForm")) return;   // don't wipe a half-typed form on live updates
   card.textContent = "";
   const chip = $("#meChip");
   if (!db){
@@ -4079,8 +4111,10 @@ function renderMe(){
   if (!myId){
     $("#profileForm").hidden = true; $("#meStats").textContent = "";
     chip.hidden = false; chip.textContent = ""; chip.append(el("span",{class:"ava sm",style:"--c:var(--muted)"},"+"), el("span",{},"Войти"));
-    card.append(authCard()); return;
+    card.append(el("div",{class:"empty"},L("Чтобы играть и сохранять прогресс, войди в аккаунт.","Sign in to play and keep your progress.")), el("button",{class:"btn",type:"button",style:"margin:10px auto 0;display:block",onclick:showAuthGate},L("Войти или создать аккаунт","Sign in or create an account")));
+    showAuthGate(); return;
   }
+  hideAuthGate();
   $("#profileForm").hidden = readOnly;
   const p = myProfile;
   const myPosts = posts.filter(x => x.author === myId).length;
