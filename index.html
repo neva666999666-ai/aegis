@@ -1772,7 +1772,7 @@ const EN_X = {"ЗАБАНЕН":"BANNED","БАН":"BAN","Лента":"Feed","Ви
 const EN_P = [["Пул\\ дуэли\\ —\\ (.+?)\\ героев,\\ по\\ (.+?)\\ каждого\\ атрибута\\.\\ Все\\ баны\\ и\\ пики\\ только\\ из\\ него\\.","Duel pool — {0} heroes, {1} of each attribute. All bans and picks come only from it."],["Пока\\ никто\\ не\\ прошёл\\ калибровку\\.\\ Сыграй\\ (.+?)\\ дуэлей,\\ чтобы\\ попасть\\ в\\ таблицу\\.","Nobody has passed calibration yet. Play {0} duels to get on the table."],["Сыграй\\ (.+?)\\ дуэлей,\\ чтобы\\ получить\\ ранг","Play {0} duels to get a rank"],["Калибровка\\ (.+?)\\ из\\ (.+?)\\ игр\\ —\\ ранг\\ скрыт","Calibration {0} of {1} games — rank hidden"],["(.+?)\\ побед\\ и\\ (.+?)\\ поражений\\ в\\ калибровке","{0} wins and {1} losses in calibration"],["Пул\\ дуэли\\ ·\\ осталось\\ (.+?)\\ из\\ (.+?)","Duel pool · {0} of {1} left"],["до\\ следующей\\ звезды\\ (.+?)\\ MMR","{0} MMR to the next star"],["Оценка:\\ Свет\\ (.+?)%\\ —\\ (.+?)%\\ Тьма","Estimate: Radiant {0}% — {1}% Dire"],["Место\\ среди\\ Титанов:\\ \\#(.+?)","Place among Titans: #{0}"],["(.+?)\\ из\\ (.+?)\\ игр\\ —\\ ранг\\ скрыт","{0} of {1} games — rank hidden"],["Калибровка:\\ игра\\ (.+?)\\ из\\ (.+?)","Calibration: game {0} of {1}"],["Осталось\\ (.+?)\\ (.+?)\\ до\\ ранга","{0} {1} left until rank"],["до\\ (.+?)\\-й\\ звезды\\ —\\ (.+?)\\ MMR","{1} MMR to star {0}"],["до\\ ранга\\ «(.+?)»\\ —\\ (.+?)\\ MMR","{1} MMR to \"{0}\" rank"],["(.+?)\\ пиков\\ ·\\ (.+?)\\ банов","{0} picks · {1} bans"],["Свет\\ (.+?)%,\\ Тьма\\ (.+?)%","Radiant {0}%, Dire {1}%"],["(.+?)(.+?)\\ MMR\\ ·\\ теперь\\ (.+?)","{0}{1} MMR · now {2}"],["Дуэль:\\ (.+?)\\ vs\\ (.+?)\\.\\ (.+?)","Duel: {0} vs {1}. {2}"],["Твой\\ (.+?)\\ (.+?)\\ из\\ (.+?)\\ ·\\ (.+?)","Your {0} {1} of {2} · {3}"],["калибровка\\ (.+?)/(.+?)","calibration {0}/{1}"],["Спорность\\ (.+?)%","Contested {0}%"],["MMR\\ от\\ (.+?)\\ до\\ (.+?)","MMR {0} to {1}"],["·\\ \\#(.+?)\\ в\\ мире","· #{0} worldwide"],["Твой\\ ход:\\ (.+?)","Your move: {0}"],["до\\ «(.+?)»\\ (.+?)\\ MMR","{1} MMR to \"{0}\""],["Ходит\\ (.+?):\\ (.+?)\\.","{0} to move: {1}."],["Убрать\\ (.+?)","Remove {0}"],["Свет\\ (.+?)%","Radiant {0}%"],["(.+?)%\\ Тьма","{0}% Dire"],["Ход\\ (.+?):\\ (.+?)(.+?)","{0} move: {1}{2}"],["·\\ (.+?)\\ из\\ (.+?)","· {0} of {1}"],["Слот\\ (.+?)","Slot {0}"],["Пик:\\ (.+?)","Pick: {0}"],["(.+?)\\ из\\ 5","{0} of 5"],["Пик\\ (.+?)","Pick {0}"]];
 EN_P.push(["^(.+?) · калибровка (.+?)/(.+?)$", "{0} · calibration {1}/{2}"]);
 EN_P.push(["^(.+?) игр$", "{0} games"], ["^Читать на (.+?) ↗$", "Read on {0} ↗"]);
-EN_X["Войди в аккаунт, чтобы MMR за игры с ботами засчитывался"] = "Sign in so MMR counts for bot games";
+EN_X["Тренировка · MMR не меняется"] = "Practice · MMR unchanged"; EN_X["Войди в аккаунт, чтобы MMR за игры с ботами засчитывался"] = "Sign in so MMR counts for bot games";
 EN_X["Загрузка профиля…"] = "Loading profile…"; EN_X["Профиль ещё загружается — попробуй через секунду."] = "The profile is still loading — try again in a second.";
 EN_X["Не удалось загрузить профиль. Попробуй ещё раз."] = "Couldn't load the profile. Try again.";
 
@@ -2558,7 +2558,7 @@ function myEmblem(size){
 }
 let playKey = "", findKey = "";
 const BOT_LVL = {1: {t: "Новичок", d: L("Выбирает героев почти наугад.", "Picks heroes almost at random.")}, 2: {t: "Обычный", d: L("Играет по мете и думает быстро.", "Plays the meta and thinks fast.")}, 3: {t: "Эксперт", d: L("Контрпики, позиции, лучшие герои меты.", "Counter-picks, roles, the best meta heroes.")}};
-const PLAY_MODES = {find: {t: "Поиск игры", d: "Подбор соперника по рейтингу. MMR меняется."}, bot1: {t: "Бот · Новичок", d: BOT_LVL[1].d + L(" MMR меняется как в обычной игре.", " MMR changes as in a normal game.")}, bot2: {t: "Бот · Обычный", d: BOT_LVL[2].d + L(" MMR меняется как в обычной игре.", " MMR changes as in a normal game.")}, bot3: {t: "Бот · Эксперт", d: BOT_LVL[3].d + L(" MMR меняется как в обычной игре.", " MMR changes as in a normal game.")}};
+const PLAY_MODES = {find: {t: "Поиск игры", d: "Подбор соперника по рейтингу. MMR меняется."}, bot1: {t: "Бот · Новичок", d: BOT_LVL[1].d + L(" Тренировка: MMR не меняется.", " Practice: MMR is unchanged.")}, bot2: {t: "Бот · Обычный", d: BOT_LVL[2].d + L(" Тренировка: MMR не меняется.", " Practice: MMR is unchanged.")}, bot3: {t: "Бот · Эксперт", d: BOT_LVL[3].d + L(" Тренировка: MMR не меняется.", " Practice: MMR is unchanged.")}};
 const LAB_ENTRY = {t: "Лаборатория драфтов", d: L("Тренировка драфта с ИИ-разбором.", "Practice drafting with analysis.")};
 const isBotMode = m => /^bot\d$/.test(m);
 let playMode = "find"; try { let m = localStorage.getItem("aegis-mode"); if (m === "bot") m = "bot2"; if (PLAY_MODES[m]) playMode = m; } catch {}
@@ -3910,7 +3910,7 @@ const resultFx = (() => {
     W = innerWidth; H = innerHeight; cv.width = W; cv.height = H; g = cv.getContext("2d"); P = []; alive = true; last = performance.now(); raf = requestAnimationFrame(loop);
     const o = ov; setTimeout(() => { if (ov !== o) return; ov.classList.add("hit"); burst(win); try { navigator.vibrate && navigator.vibrate(win ? [30, 40, 30] : [90]); } catch {} }, win ? 1000 : 1230);
     if (me){ const fill = () => { const h = (myProfile && myProfile.hist || []).find(x => x.id === (d.bot ? d.histId : d.id)); if (!h || ov !== o) return false;
-      sub.append(h.calib ? el("b",{}, "Калибровка") : el("b",{class: h.delta >= 0 ? "up" : "dn"}, (h.delta > 0 ? "+" : "") + h.delta + " MMR")); return true; };
+      sub.append(h.practice ? el("b",{}, L("Тренировка · MMR не меняется", "Practice · MMR unchanged")) : h.calib ? el("b",{}, "Калибровка") : el("b",{class: h.delta >= 0 ? "up" : "dn"}, (h.delta > 0 ? "+" : "") + h.delta + " MMR")); return true; };
       [1400, 2400, 4000].some((t, i) => { setTimeout(() => { if (!sub.querySelector("b")) fill(); }, t); return false; }); }
     return true;
   }
@@ -3990,7 +3990,7 @@ function renderDuel(){
     const winText = r.winner === me ? "Победа!" : me ? "Поражение" : (r.winner==="h" ? "Победил Свет" : "Победила Тьма");
     const res = el("div",{class:"result"},
       el("div",{class:"winner " + (r.winner===me ? "win" : "lose")}, winText),
-      (() => { if (d.bot && !(myProfile && myProfile.nick)) return el("p",{class:"status",style:"text-align:center;margin:-6px 0 10px"},"Войди в аккаунт, чтобы MMR за игры с ботами засчитывался"); const hEntry = myProfile && (myProfile.hist||[]).find(x => x.id === (d.bot ? d.histId : d.id)); if (!hEntry) return null; if (hEntry.calib){ const n = (myProfile.hist||[]).filter(x => x.calib && x.ts <= hEntry.ts).length; return el("p",{class:"mmr-delta calib"}, (n >= CALIB_GAMES ? L("Калибровка завершена — ранг открыт в профиле!", "Calibration complete — your rank is in the profile!") : L(`Калибровка: игра ${n} из ${CALIB_GAMES}`, `Calibration: game ${n} of ${CALIB_GAMES}`)) + (typeof hEntry.skill === "number" ? L(` · оценка драфта ${hEntry.skill}/100`, ` · draft score ${hEntry.skill}/100`) : "")); } return el("p",{class:"mmr-delta " + (hEntry.delta >= 0 ? "up" : "down")}, `${hEntry.delta >= 0 ? "+" : ""}${hEntry.delta} MMR · теперь ${hEntry.mmr}`); })(),
+      (() => { if (isOpenBot(d)) return el("p",{class:"status",style:"text-align:center;margin:-6px 0 10px"}, L("Тренировка с ботом — MMR не меняется", "Practice vs a bot — MMR is unchanged")); if (d.bot && !(myProfile && myProfile.nick)) return el("p",{class:"status",style:"text-align:center;margin:-6px 0 10px"},"Войди в аккаунт, чтобы MMR за игры с ботами засчитывался"); const hEntry = myProfile && (myProfile.hist||[]).find(x => x.id === (d.bot ? d.histId : d.id)); if (!hEntry) return null; if (hEntry.calib){ const n = (myProfile.hist||[]).filter(x => x.calib && x.ts <= hEntry.ts).length; return el("p",{class:"mmr-delta calib"}, (n >= CALIB_GAMES ? L("Калибровка завершена — ранг открыт в профиле!", "Calibration complete — your rank is in the profile!") : L(`Калибровка: игра ${n} из ${CALIB_GAMES}`, `Calibration: game ${n} of ${CALIB_GAMES}`)) + (typeof hEntry.skill === "number" ? L(` · оценка драфта ${hEntry.skill}/100`, ` · draft score ${hEntry.skill}/100`) : "")); } return el("p",{class:"mmr-delta " + (hEntry.delta >= 0 ? "up" : "down")}, `${hEntry.delta >= 0 ? "+" : ""}${hEntry.delta} MMR · теперь ${hEntry.mmr}`); })(),
       el("button",{class:"btn res-again",type:"button",onclick:()=> isOpenBot(d) ? $("#duelBot").click() : $("#duelCreate").click()}, isOpenBot(d) ? "Играть ещё раз" : "Найти ещё игру"));
     const more = el("details",{class:"res-more"}, el("summary",{},"Подробный разбор"),
       el("div",{class:"odds",role:"img","aria-label":`Свет ${r.radiant}%, Тьма ${100-r.radiant}%`},
@@ -4230,7 +4230,7 @@ function renderMineGames(){
     hist.forEach(h => { const dt = new Date(h.ts); mineBox.append(el("div",{class:"saved-item"},
       el("span",{class:"res " + (h.win ? "w" : "l")}, h.win ? "W" : "L"),
       el("span",{class:"t"}, "vs " + (h.oppNick || "Игрок")),
-      el("span",{class:"n-mmr " + (h.delta >= 0 ? "up" : "down")}, h.calib && typeof h.skill === "number" ? L("драфт ", "draft ") + h.skill : (h.delta >= 0 ? "+" : "") + h.delta),
+      el("span",{class:"n-mmr " + (h.delta >= 0 ? "up" : "down")}, h.practice ? L("тренировка", "practice") : h.calib && typeof h.skill === "number" ? L("драфт ", "draft ") + h.skill : (h.delta >= 0 ? "+" : "") + h.delta),
       el("span",{class:"status"}, `${dt.getDate()} ${MONTHS[dt.getMonth()]}`))); }); }
 }
 function renderLobby(){
@@ -4245,7 +4245,7 @@ function renderLobby(){
 }
 /* MMR: Elo on a 1..10000 ladder: everyone starts at 1, the final rank begins at 10000. Bot games count at half weight. */
 const MMR_STEP = 25, MMR_STREAK_WIN = 50, STREAK_FROM = 5;   // win +25, loss −25; with a streak of 5+ wins every next win gives +50 (a loss still costs 25; a loss resets the streak)
-const winStreak = hist => { let n = 0; for (let i = (hist||[]).length - 1; i >= 0 && hist[i].win; i--) n++; return n; };
+const winStreak = hist => { hist = (hist || []).filter(h => !h.practice); let n = 0; for (let i = hist.length - 1; i >= 0 && hist[i].win; i--) n++; return n; };
 const mmrDelta = (hist, win, calib) => (win ? (winStreak(hist) >= STREAK_FROM ? MMR_STREAK_WIN : MMR_STEP) : -MMR_STEP) * (calib ? 2 : 1);
 /* calibration: rank comes from HOW you draft (picks from your pool, positions, bans, draft strength) and from how many games you won */
 const heroVal = h => { const m = HEROES.find(x => x.n === h); return m ? m.wr : 46; };
@@ -4676,7 +4676,16 @@ async function countStats(){
 }
 async function countBot(win, d){
   if (!db || !myId || readOnly || !(myProfile && myProfile.nick)) return;
-  const p = myProfile, lvl = (d && d.lvl) || 2, mmr0 = mmrOf(p), calib = gamesOf(p) < CALIB_GAMES;
+  const p = myProfile, lvl = (d && d.lvl) || 2, mmr0 = mmrOf(p);
+  if (d && isOpenBot(d)){      // an openly chosen bot is practice: no MMR, no calibration progress, kept in «Мои игры»
+    const histId = "bot" + Date.now(); d.histId = histId;
+    let heroes = []; try { heroes = teamOf(d, "h", "pick"); } catch {}
+    const entry = {id: histId, ts: Date.now(), win, delta: 0, mmr: mmr0, calib: false, practice: true, opp: "bot", oppNick: L("Бот", "Bot") + " · " + T(BOT_LVL[lvl].t), heroes, odds: d.result ? d.result.radiant : 50};
+    const body = {...p, pw: (p.pw || 0) + (win ? 1 : 0), pl: (p.pl || 0) + (win ? 0 : 1), hist: (p.hist || []).concat([entry]).slice(-40)};
+    try { await db.doc("profiles/" + myId).set(body); myProfile = body; profiles[myId] = body; renderMe(); renderDuel(); } catch {}
+    return;
+  }
+  const calib = gamesOf(p) < CALIB_GAMES;
   const skill = calib ? Math.round(draftSkill(d, "h")) : null;
   const delta = calib ? 0 : mmrDelta(p.hist, win, false);
   let mmr = Math.max(MMR_START, mmr0 + delta), peak = Math.max(p.peak || mmr0, mmr), histId = "bot" + Date.now(), calibSkill = p.calibSkill;
@@ -4923,7 +4932,7 @@ function sparkline(values){
 function renderMeStats(p){
   const box = $("#meStats"); box.textContent = "";
   const games = gamesOf(p), m = mmrOf(p), t = tierOf(m);
-  const hist = p.hist || [];
+  const hist = (p.hist || []).filter(h => !h.practice);          // practice games vs an open bot don't count towards rating stats
   let streak = 0, best = 0, run = 0;
   hist.forEach(h => { run = h.win ? run + 1 : 0; best = Math.max(best, run); });
   for (let i = hist.length - 1; i >= 0; i--){ if (i === hist.length - 1) streak = hist[i].win ? 1 : -1; else if (hist[i].win === (streak > 0)) streak += streak > 0 ? 1 : -1; else break; }
@@ -4935,7 +4944,7 @@ function renderMeStats(p){
     tile(streak ? `${Math.abs(streak)} ${streak > 0 ? "W" : "L"}` : "—", mini ? "серия" : "текущая серия", streak > 0 ? "good" : streak < 0 ? "bad" : ""),
     tile(best ? String(best) : "—", mini ? "рекорд серии" : "лучшая серия побед"),
     tile(avgOdds != null ? avgOdds + "%" : "—", mini ? "оценка драфта" : "средняя оценка драфта"),
-    tile(`${p.bw||0}–${p.bl||0}`, mini ? "с ботами" : "против бота"));
+    tile(`${(p.bw||0) + (p.pw||0)}–${(p.bl||0) + (p.pl||0)}`, mini ? "с ботами" : "против бота"));
   const tilesInCard = isCalibrated(p);
   if (!isCalibrated(p)){
     const ch = hist.slice(0, games).slice(-CALIB_GAMES), left = CALIB_GAMES - games;
@@ -4951,7 +4960,7 @@ function renderMeStats(p){
     const prog = t.to ? Math.round(100 * (m - t.from) / (t.to - t.from)) : 100;
     box.append(el("div",{class:"mmr-card"},
       el("div",{class:"mmr-top"},
-        el("div",{class:"mmr-left"}, (games || p.bw || p.bl) ? tilesEl(true) : null, el("div",{class:"lbl"},"MMR в Аегисе"), el("div",{class:"mmr-num"}, String(m)), el("div",{class:"status"}, games ? `Пик: ${p.peak || m}` : "Калибровка: сыграй первую дуэль")),
+        el("div",{class:"mmr-left"}, (games || p.bw || p.bl || p.pw || p.pl) ? tilesEl(true) : null, el("div",{class:"lbl"},"MMR в Аегисе"), el("div",{class:"mmr-num"}, String(m)), el("div",{class:"status"}, games ? `Пик: ${p.peak || m}` : "Калибровка: сыграй первую дуэль")),
         el("div",{class:"tier"}, emblem3D({kind:"rank", idx:t.idx, stars: games ? t.stars : 0, place: t.idx === 8 && games ? titanPlace(myId) : null}, 150), el("span",{class:"tier-badge"}, t.name), (t.idx < 7 && games) ? el("span",{class:"star-count"}, "★".repeat(t.stars), el("small",{}, ` ${t.stars} из 5`)) : null, !games ? null : t.idx === 8 ? el("span",{class:"status"}, "Высший ранг") : t.idx === 7 ? el("span",{class:"status"}, titanPlace(myId) ? `Место среди Титанов: #${titanPlace(myId)}` : "Высший ранг") : t.stars < 5 ? el("span",{class:"status"}, `до ${t.stars + 1}-й звезды — ${Math.max(1, t.nextStarAt - m)} MMR`) : el("span",{class:"status"}, `до ранга «${t.nextName}» — ${Math.max(1, t.to - m)} MMR`))),
       el("div",{class:"tier-bar","aria-hidden":"true"}, el("span",{style:`width:${Math.max(3,prog)}%`})),
       hist.length >= 2 ? sparkline([hist[0].mmr - hist[0].delta, ...hist.map(h => h.mmr)]) : null));
@@ -4960,7 +4969,7 @@ function renderMeStats(p){
     el("div",{class:"ladder"}, TIERS.map(([from, name], i) => el("div",{class:"rung" + (!isCalibrated(p) ? "" : i === t.idx ? " cur" : i > t.idx ? " locked" : ""),"data-pv":"1",onclick:() => previewRank(i)},
       rankEmblem(i, 56), el("b",{}, name), el("span",{}, i === TIERS.length - 1 ? `${from}+` : `${from}–${TIERS[i+1][0] - 1}`)))),
     el("p",{class:"status",style:"margin:8px 0 0"},"Звёзды над значком — ступени внутри ранга: от 1 до 5, после пятой — новый ранг. Нажми на ранг — увидишь его эмблему и фон.")));
-  if (!games && !(p.bw||p.bl)){ box.append(el("div",{class:"empty",style:"margin-top:10px"}, "Статистика появится после первой дуэли. Жми золотую кнопку «Дуэль» внизу.")); return; }
+  if (!games && !(p.bw||p.bl||p.pw||p.pl)){ box.append(el("div",{class:"empty",style:"margin-top:10px"}, "Статистика появится после первой дуэли. Жми золотую кнопку «Дуэль» внизу.")); return; }
   // tiles (calibrated players have them inside the MMR card)
   if (!tilesInCard) box.append(tilesEl(false));
   if (!hist.length) return;
